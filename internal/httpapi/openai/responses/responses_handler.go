@@ -50,6 +50,24 @@ func (h *Handler) GetResponseByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Responses(w http.ResponseWriter, r *http.Request) {
+	if strings.TrimSpace(r.Header.Get("Authorization")) == "" {
+		writeOpenAIError(w, http.StatusUnauthorized, auth.ErrUnauthorized.Error())
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, openAIGeneralMaxSize)
+	var req map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "too large") {
+			writeOpenAIError(w, http.StatusRequestEntityTooLarge, "request body too large")
+			return
+		}
+		writeOpenAIError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	if !applyTargetAccountFromFileTags(w, r, req) {
+		return
+	}
 	a, err := h.Auth.Determine(r)
 	if err != nil {
 		status := http.StatusUnauthorized
@@ -68,16 +86,6 @@ func (h *Handler) Responses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, openAIGeneralMaxSize)
-	var req map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "too large") {
-			writeOpenAIError(w, http.StatusRequestEntityTooLarge, "request body too large")
-			return
-		}
-		writeOpenAIError(w, http.StatusBadRequest, "invalid json")
-		return
-	}
 	if err := h.preprocessInlineFileInputs(r.Context(), a, req); err != nil {
 		writeOpenAIInlineFileError(w, err)
 		return
@@ -139,6 +147,27 @@ func (h *Handler) Responses(w http.ResponseWriter, r *http.Request) {
 	streamReq := start.Request
 	refFileTokens := streamReq.RefFileTokens
 	h.handleResponsesStreamWithRetry(w, r, a, start.Response, start.Payload, start.Pow, owner, responseID, streamReq, streamReq.ResponseModel, streamReq.PromptTokenText, refFileTokens, streamReq.Thinking, streamReq.Search, streamReq.ToolNames, streamReq.ToolsRaw, streamReq.ToolChoice, traceID, historySession)
+}
+
+func applyTargetAccountFromFileTags(w http.ResponseWriter, r *http.Request, req map[string]any) bool {
+	accounts := promptcompat.CollectOpenAIFileTagAccounts(req)
+	if len(accounts) == 0 {
+		return true
+	}
+	if len(accounts) > 1 {
+		writeOpenAIError(w, http.StatusBadRequest, "file tags must reference a single account")
+		return false
+	}
+	tagAccount := strings.TrimSpace(accounts[0])
+	headerAccount := strings.TrimSpace(r.Header.Get("X-Ds2-Target-Account"))
+	if headerAccount != "" && !strings.EqualFold(headerAccount, tagAccount) {
+		writeOpenAIError(w, http.StatusBadRequest, "file tag account does not match X-Ds2-Target-Account")
+		return false
+	}
+	if headerAccount == "" {
+		r.Header.Set("X-Ds2-Target-Account", tagAccount)
+	}
+	return true
 }
 
 func (h *Handler) handleResponsesNonStream(w http.ResponseWriter, resp *http.Response, owner, responseID, model, finalPrompt string, refFileTokens int, thinkingEnabled, searchEnabled bool, toolNames []string, toolsRaw any, toolChoice promptcompat.ToolChoicePolicy, traceID string) {

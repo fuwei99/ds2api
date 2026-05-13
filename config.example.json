@@ -1,6 +1,6 @@
 {
-  "_comment": "DS2API 配置文件示例 - 复制为 config.json 使用",
-  "_doc": "详细文档: https://github.com/CJackHwang/ds2api",
+  "_comment": "DS2API config example. Copy to config.json and fill your own private credentials.",
+  "_doc": "https://github.com/CJackHwang/ds2api",
   "keys": [
     "your-api-key-1",
     "your-api-key-2"
@@ -8,40 +8,40 @@
   "api_keys": [
     {
       "key": "your-api-key-1",
-      "name": "主 API Key",
-      "remark": "给 OpenAI 客户端使用"
+      "name": "Primary API Key",
+      "remark": "Used by OpenAI-compatible clients"
     },
     {
       "key": "your-api-key-2",
-      "name": "备用 API Key",
-      "remark": "压测或临时调试"
+      "name": "Backup API Key",
+      "remark": "Used for tests or temporary clients"
     }
   ],
   "accounts": [
     {
-      "_comment": "邮箱登录方式",
-      "name": "主账号",
-      "remark": "优先用于生产流量",
       "email": "example1@example.com",
-      "password": "your-password-1"
+      "password": "your-password-1",
+      "active": true,
+      "muted": false,
+      "mute_until": 0,
+      "last_used": 0,
+      "token": ""
     },
     {
-      "_comment": "邮箱登录方式 - 账号2",
-      "name": "备用账号",
-      "email": "example2@example.com",
-      "password": "your-password-2"
-    },
-    {
-      "_comment": "手机号登录方式（中国大陆）",
-      "mobile": "12345678901",
-      "password": "your-password-3"
+      "mobile": "+8613800138000",
+      "password": "your-password-2",
+      "active": true,
+      "muted": false,
+      "mute_until": 0,
+      "last_used": 0,
+      "token": ""
     }
   ],
   "model_aliases": {
-    "gpt-4o": "deepseek-v4-flash",
-    "gpt-5.5": "deepseek-v4-flash",
-    "gpt-5.3-codex": "deepseek-v4-pro",
-    "o3": "deepseek-v4-pro"
+    "gpt-4o": "deepseek-chat",
+    "gpt-5.5": "deepseek-chat",
+    "gpt-5.3-codex": "deepseek-reasoner",
+    "o3": "deepseek-reasoner"
   },
   "responses": {
     "store_ttl_seconds": 900

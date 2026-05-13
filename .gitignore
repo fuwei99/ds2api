@@ -32,6 +32,7 @@ pnpm-lock.yaml
 dist/
 *.tsbuildinfo
 .cache/
+.gocache/
 .parcel-cache/
 static/admin/
 internal/webui/assets/admin/

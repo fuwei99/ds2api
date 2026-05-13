@@ -177,7 +177,7 @@ func TestTestAccount_MessageModeUsesExpertModelTypeForExpertModel(t *testing.T) 
 		t.Fatal("expected test account")
 	}
 
-	result := h.testAccount(context.Background(), acc, "deepseek-v4-pro", "hello")
+	result := h.testAccount(context.Background(), acc, "deepseek-expert-reasoner", "hello")
 
 	if ok, _ := result["success"].(bool); !ok {
 		t.Fatalf("expected success=true, got %#v", result)
@@ -200,7 +200,7 @@ func TestTestAccount_MessageModeUsesVisionModelTypeForVisionModel(t *testing.T) 
 		t.Fatal("expected test account")
 	}
 
-	result := h.testAccount(context.Background(), acc, "deepseek-v4-vision", "hello")
+	result := h.testAccount(context.Background(), acc, "deepseek-vision", "hello")
 
 	if ok, _ := result["success"].(bool); !ok {
 		t.Fatalf("expected success=true, got %#v", result)

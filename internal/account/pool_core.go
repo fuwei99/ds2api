@@ -3,6 +3,7 @@ package account
 import (
 	"sort"
 	"sync"
+	"time"
 
 	"ds2api/internal/config"
 )
@@ -46,7 +47,7 @@ func (p *Pool) Reset() {
 	ids := make([]string, 0, len(accounts))
 	for _, a := range accounts {
 		id := a.Identifier()
-		if id != "" {
+		if id != "" && a.IsActive() && !a.IsMuted(time.Now()) {
 			ids = append(ids, id)
 		}
 	}

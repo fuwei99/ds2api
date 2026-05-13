@@ -31,6 +31,12 @@ func toAccount(m map[string]any) config.Account {
 func fieldStringOptional(m map[string]any, key string) (string, bool) {
 	return adminshared.FieldStringOptional(m, key)
 }
+func fieldBoolOptional(m map[string]any, key string) (bool, bool) {
+	return adminshared.FieldBoolOptional(m, key)
+}
+func fieldFloat(m map[string]any, key string) float64 {
+	return adminshared.FieldFloat(m, key)
+}
 func accountMatchesIdentifier(acc config.Account, identifier string) bool {
 	return adminshared.AccountMatchesIdentifier(acc, identifier)
 }

@@ -1,11 +1,13 @@
 package account
 
+import "time"
+
 func (p *Pool) canQueueLocked(target string, exclude map[string]bool) bool {
 	if target != "" {
 		if exclude[target] {
 			return false
 		}
-		if _, ok := p.store.FindAccount(target); !ok {
+		if _, ok := p.store.FindAvailableAccount(target, time.Now()); !ok {
 			return false
 		}
 	}

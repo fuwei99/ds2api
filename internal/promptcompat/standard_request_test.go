@@ -10,10 +10,11 @@ func TestStandardRequestCompletionPayloadSetsModelTypeFromResolvedModel(t *testi
 		search    bool
 		modelType string
 	}{
-		{name: "default", model: "deepseek-v4-flash", thinking: false, search: false, modelType: "default"},
-		{name: "default_nothinking", model: "deepseek-v4-flash-nothinking", thinking: false, search: false, modelType: "default"},
-		{name: "expert", model: "deepseek-v4-pro", thinking: true, search: false, modelType: "expert"},
-		{name: "vision", model: "deepseek-v4-vision", thinking: true, search: false, modelType: "vision"},
+		{name: "default", model: "deepseek-chat", thinking: false, search: false, modelType: "default"},
+		{name: "default_reasoner_search", model: "deepseek-reasoner-search", thinking: true, search: true, modelType: "default"},
+		{name: "expert", model: "deepseek-expert-reasoner", thinking: true, search: false, modelType: "expert"},
+		{name: "vision", model: "deepseek-vision", thinking: false, search: false, modelType: "vision"},
+		{name: "vision_reasoner_search", model: "deepseek-vision-reasoner-search", thinking: true, search: true, modelType: "vision"},
 	}
 
 	for _, tc := range tests {

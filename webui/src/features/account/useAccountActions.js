@@ -9,7 +9,7 @@ export function useAccountActions({ apiFetch, t, onMessage, onRefresh, config, f
     const [newKey, setNewKey] = useState({ key: '', name: '', remark: '' })
     const [copiedKey, setCopiedKey] = useState(null)
     const [newAccount, setNewAccount] = useState({ name: '', remark: '', email: '', mobile: '', password: '' })
-    const [editAccount, setEditAccount] = useState({ name: '', remark: '' })
+    const [editAccount, setEditAccount] = useState({ name: '', remark: '', active: true, muted: false, mute_until: 0 })
     const [loading, setLoading] = useState(false)
     const [testing, setTesting] = useState({})
     const [testingAll, setTestingAll] = useState(false)
@@ -44,7 +44,7 @@ export function useAccountActions({ apiFetch, t, onMessage, onRefresh, config, f
     const openAddAccount = () => {
         setShowEditAccount(false)
         setEditingAccount(null)
-        setEditAccount({ name: '', remark: '' })
+        setEditAccount({ name: '', remark: '', active: true, muted: false, mute_until: 0 })
         setNewAccount({ name: '', remark: '', email: '', mobile: '', password: '' })
         setShowAddAccount(true)
     }
@@ -67,6 +67,9 @@ export function useAccountActions({ apiFetch, t, onMessage, onRefresh, config, f
         setEditAccount({
             name: account?.name || '',
             remark: account?.remark || '',
+            active: account?.active !== false,
+            muted: Boolean(account?.muted),
+            mute_until: Number(account?.mute_until || 0),
         })
         setShowEditAccount(true)
     }
@@ -74,7 +77,7 @@ export function useAccountActions({ apiFetch, t, onMessage, onRefresh, config, f
     const closeEditAccount = () => {
         setShowEditAccount(false)
         setEditingAccount(null)
-        setEditAccount({ name: '', remark: '' })
+        setEditAccount({ name: '', remark: '', active: true, muted: false, mute_until: 0 })
     }
 
     const addKey = async () => {

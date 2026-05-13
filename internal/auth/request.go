@@ -183,6 +183,21 @@ func (r *Resolver) MarkTokenInvalid(a *RequestAuth) {
 	_ = r.Store.UpdateAccountToken(a.AccountID, "")
 }
 
+func (r *Resolver) MarkAccountMuted(a *RequestAuth, muteUntil float64) {
+	if r == nil || r.Store == nil || a == nil || !a.UseConfigToken || a.AccountID == "" {
+		return
+	}
+	if a.TriedAccounts == nil {
+		a.TriedAccounts = map[string]bool{}
+	}
+	a.TriedAccounts[a.AccountID] = true
+	a.Account.Muted = true
+	a.Account.MuteUntil = muteUntil
+	if err := r.Store.MarkAccountMuted(a.AccountID, muteUntil); err != nil {
+		config.Logger.Warn("[account_mute] persist failed", "account", a.AccountID, "mute_until", muteUntil, "error", err)
+	}
+}
+
 func (r *Resolver) SwitchAccount(ctx context.Context, a *RequestAuth) bool {
 	if !a.UseConfigToken {
 		return false
@@ -218,6 +233,13 @@ func (a *RequestAuth) SwitchAccount(ctx context.Context) bool {
 		return false
 	}
 	return a.resolver.SwitchAccount(ctx, a)
+}
+
+func (a *RequestAuth) MarkAccountMuted(muteUntil float64) {
+	if a == nil || a.resolver == nil {
+		return
+	}
+	a.resolver.MarkAccountMuted(a, muteUntil)
 }
 
 func (r *Resolver) Release(a *RequestAuth) {

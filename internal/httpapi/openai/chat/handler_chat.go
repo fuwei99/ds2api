@@ -37,23 +37,12 @@ func (h *Handler) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a, err := h.Auth.Determine(r)
-	if err != nil {
-		status := http.StatusUnauthorized
-		detail := err.Error()
-		if err == auth.ErrNoAccount {
-			status = http.StatusTooManyRequests
-		}
-		writeOpenAIError(w, status, detail)
+	if strings.TrimSpace(r.Header.Get("Authorization")) == "" {
+		writeOpenAIError(w, http.StatusUnauthorized, auth.ErrUnauthorized.Error())
 		return
 	}
-	var sessionID string
-	defer func() {
-		h.autoDeleteRemoteSession(r.Context(), a, sessionID)
-		h.Auth.Release(a)
-	}()
 
-	r = r.WithContext(auth.WithAuth(r.Context(), a))
+	var sessionID string
 
 	r.Body = http.MaxBytesReader(w, r.Body, openAIGeneralMaxSize)
 	var req map[string]any
@@ -65,6 +54,25 @@ func (h *Handler) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 		writeOpenAIError(w, http.StatusBadRequest, "invalid json")
 		return
 	}
+	if !applyTargetAccountFromFileTags(w, r, req) {
+		return
+	}
+	a, err := h.Auth.Determine(r)
+	if err != nil {
+		status := http.StatusUnauthorized
+		detail := err.Error()
+		if err == auth.ErrNoAccount {
+			status = http.StatusTooManyRequests
+		}
+		writeOpenAIError(w, status, detail)
+		return
+	}
+	defer func() {
+		h.autoDeleteRemoteSession(r.Context(), a, sessionID)
+		h.Auth.Release(a)
+	}()
+
+	r = r.WithContext(auth.WithAuth(r.Context(), a))
 	if err := h.preprocessInlineFileInputs(r.Context(), a, req); err != nil {
 		writeOpenAIInlineFileError(w, err)
 		return
@@ -119,6 +127,27 @@ func (h *Handler) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 	streamReq := start.Request
 	refFileTokens := streamReq.RefFileTokens
 	h.handleStreamWithRetry(w, r, a, start.Response, start.Payload, start.Pow, sessionID, &sessionID, streamReq, streamReq.ResponseModel, streamReq.PromptTokenText, refFileTokens, streamReq.Thinking, streamReq.Search, streamReq.ToolNames, streamReq.ToolsRaw, streamReq.ToolChoice, historySession)
+}
+
+func applyTargetAccountFromFileTags(w http.ResponseWriter, r *http.Request, req map[string]any) bool {
+	accounts := promptcompat.CollectOpenAIFileTagAccounts(req)
+	if len(accounts) == 0 {
+		return true
+	}
+	if len(accounts) > 1 {
+		writeOpenAIError(w, http.StatusBadRequest, "file tags must reference a single account")
+		return false
+	}
+	tagAccount := strings.TrimSpace(accounts[0])
+	headerAccount := strings.TrimSpace(r.Header.Get("X-Ds2-Target-Account"))
+	if headerAccount != "" && !strings.EqualFold(headerAccount, tagAccount) {
+		writeOpenAIError(w, http.StatusBadRequest, "file tag account does not match X-Ds2-Target-Account")
+		return false
+	}
+	if headerAccount == "" {
+		r.Header.Set("X-Ds2-Target-Account", tagAccount)
+	}
+	return true
 }
 
 func (h *Handler) autoDeleteRemoteSession(ctx context.Context, a *auth.RequestAuth, sessionID string) {

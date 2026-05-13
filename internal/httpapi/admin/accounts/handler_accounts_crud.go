@@ -65,6 +65,10 @@ func (h *Handler) listAccounts(w http.ResponseWriter, r *http.Request) {
 			"email":         acc.Email,
 			"mobile":        acc.Mobile,
 			"proxy_id":      acc.ProxyID,
+			"active":        acc.IsActive(),
+			"muted":         acc.Muted,
+			"mute_until":    acc.MuteUntil,
+			"last_used":     acc.LastUsed,
 			"has_password":  acc.Password != "",
 			"has_token":     token != "",
 			"token_preview": maskSecretPreview(token),
@@ -121,6 +125,7 @@ func (h *Handler) updateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	name, nameOK := fieldStringOptional(req, "name")
 	remark, remarkOK := fieldStringOptional(req, "remark")
+	updatedAvailability := false
 
 	err := h.Store.Update(func(c *config.Config) error {
 		for i, acc := range c.Accounts {
@@ -133,6 +138,21 @@ func (h *Handler) updateAccount(w http.ResponseWriter, r *http.Request) {
 			if remarkOK {
 				c.Accounts[i].Remark = remark
 			}
+			if active, ok := fieldBoolOptional(req, "active"); ok {
+				c.Accounts[i].Active = &active
+				updatedAvailability = true
+			}
+			if muted, ok := fieldBoolOptional(req, "muted"); ok {
+				c.Accounts[i].Muted = muted
+				updatedAvailability = true
+			}
+			if _, ok := req["mute_until"]; ok {
+				c.Accounts[i].MuteUntil = fieldFloat(req, "mute_until")
+				updatedAvailability = true
+			}
+			if _, ok := req["last_used"]; ok {
+				c.Accounts[i].LastUsed = fieldFloat(req, "last_used")
+			}
 			return nil
 		}
 		return newRequestError("账号不存在")
@@ -144,6 +164,9 @@ func (h *Handler) updateAccount(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusBadRequest, map[string]any{"detail": err.Error()})
 		return
+	}
+	if updatedAvailability {
+		h.Pool.Reset()
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"success": true, "total_accounts": len(h.Store.Snapshot().Accounts)})
 }

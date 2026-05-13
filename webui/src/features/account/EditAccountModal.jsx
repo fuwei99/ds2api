@@ -52,6 +52,30 @@ export default function EditAccountModal({
                             onChange={e => setEditAccount({ ...editAccount, remark: e.target.value })}
                         />
                     </div>
+                    <div className="space-y-3 rounded-lg border border-border bg-muted/20 px-3 py-3">
+                        <label className="flex items-center justify-between gap-3 text-sm">
+                            <span className="font-medium">{t('accountManager.activeStatus')}</span>
+                            <input
+                                type="checkbox"
+                                checked={editAccount.active !== false}
+                                onChange={e => setEditAccount({ ...editAccount, active: e.target.checked })}
+                                className="h-4 w-4 accent-primary"
+                            />
+                        </label>
+                        <label className="flex items-center justify-between gap-3 text-sm">
+                            <span className="font-medium">{t('accountManager.mutedStatus')}</span>
+                            <input
+                                type="checkbox"
+                                checked={Boolean(editAccount.muted)}
+                                onChange={e => setEditAccount({
+                                    ...editAccount,
+                                    muted: e.target.checked,
+                                    mute_until: e.target.checked ? editAccount.mute_until : 0,
+                                })}
+                                className="h-4 w-4 accent-primary"
+                            />
+                        </label>
+                    </div>
                     <div className="flex justify-end gap-2 pt-2">
                         <button onClick={onClose} className="px-4 py-2 rounded-lg border border-border hover:bg-secondary transition-colors text-sm font-medium">{t('actions.cancel')}</button>
                         <button onClick={onSave} disabled={loading} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50">

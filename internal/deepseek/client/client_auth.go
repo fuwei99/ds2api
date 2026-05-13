@@ -66,6 +66,15 @@ func (c *Client) CreateSession(ctx context.Context, a *auth.RequestAuth, maxAtte
 			continue
 		}
 		code, bizCode, msg, bizMsg := extractResponseStatus(resp)
+		if muted, muteErr := c.handleMutedResponse(ctx, a, "create session", resp); muted {
+			if muteErr != nil {
+				return "", muteErr
+			}
+			refreshed = false
+			attempts++
+			clients = c.requestClientsForAuth(ctx, a)
+			continue
+		}
 		if status == http.StatusOK && code == 0 && bizCode == 0 {
 			sessionID := extractCreateSessionID(resp)
 			if sessionID != "" {
@@ -119,6 +128,15 @@ func (c *Client) GetPowForTarget(ctx context.Context, a *auth.RequestAuth, targe
 			continue
 		}
 		code, bizCode, msg, bizMsg := extractResponseStatus(resp)
+		if muted, muteErr := c.handleMutedResponse(ctx, a, "get pow", resp); muted {
+			if muteErr != nil {
+				return "", muteErr
+			}
+			refreshed = false
+			attempts++
+			clients = c.requestClientsForAuth(ctx, a)
+			continue
+		}
 		if status == http.StatusOK && code == 0 && bizCode == 0 {
 			data, _ := resp["data"].(map[string]any)
 			bizData, _ := data["biz_data"].(map[string]any)

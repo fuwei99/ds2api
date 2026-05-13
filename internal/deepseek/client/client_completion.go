@@ -25,6 +25,16 @@ func (c *Client) CallCompletion(ctx context.Context, a *auth.RequestAuth, payloa
 	if captureSession != nil {
 		resp.Body = captureSession.WrapBody(resp.Body, resp.StatusCode)
 	}
+	if muted, muteErr := c.detectCompletionMute(ctx, a, resp); muted {
+		if muteErr != nil {
+			return nil, muteErr
+		}
+		nextPow, err := c.GetPow(ctx, a, maxAttempts)
+		if err != nil {
+			return nil, err
+		}
+		return c.CallCompletion(ctx, a, payload, nextPow, maxAttempts)
+	}
 	if resp.StatusCode == http.StatusOK {
 		resp = c.wrapCompletionWithAutoContinue(ctx, a, payload, powResp, resp)
 	}

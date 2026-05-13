@@ -27,6 +27,8 @@ func NormalizeOpenAIChatRequest(store ConfigReader, req map[string]any, traceID 
 	if config.IsNoThinkingModel(resolvedModel) {
 		thinkingEnabled = false
 	}
+	refFileIDs := CollectOpenAIRefFileIDs(req)
+	StripOpenAIFileTags(req)
 	responseModel := strings.TrimSpace(model)
 	if responseModel == "" {
 		responseModel = resolvedModel
@@ -35,7 +37,6 @@ func NormalizeOpenAIChatRequest(store ConfigReader, req map[string]any, traceID 
 	finalPrompt, toolNames := BuildOpenAIPrompt(messagesRaw, req["tools"], traceID, toolPolicy, thinkingEnabled)
 	toolNames = ensureToolDetectionEnabled(toolNames, req["tools"])
 	passThrough := collectOpenAIChatPassThrough(req)
-	refFileIDs := CollectOpenAIRefFileIDs(req)
 
 	return StandardRequest{
 		Surface:         "openai_chat",
@@ -72,6 +73,8 @@ func NormalizeOpenAIResponsesRequest(store ConfigReader, req map[string]any, tra
 	if config.IsNoThinkingModel(resolvedModel) {
 		thinkingEnabled = false
 	}
+	refFileIDs := CollectOpenAIRefFileIDs(req)
+	StripOpenAIFileTags(req)
 
 	messagesRaw := ResponsesMessagesFromRequest(req)
 	if len(messagesRaw) == 0 {
@@ -87,7 +90,6 @@ func NormalizeOpenAIResponsesRequest(store ConfigReader, req map[string]any, tra
 		toolPolicy.Allowed = namesToSet(toolNames)
 	}
 	passThrough := collectOpenAIChatPassThrough(req)
-	refFileIDs := CollectOpenAIRefFileIDs(req)
 
 	return StandardRequest{
 		Surface:         "openai_responses",

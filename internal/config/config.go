@@ -27,13 +27,17 @@ type Config struct {
 }
 
 type Account struct {
-	Name     string `json:"name,omitempty"`
-	Remark   string `json:"remark,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Mobile   string `json:"mobile,omitempty"`
-	Password string `json:"password,omitempty"`
-	Token    string `json:"token,omitempty"`
-	ProxyID  string `json:"proxy_id,omitempty"`
+	Name      string  `json:"name,omitempty"`
+	Remark    string  `json:"remark,omitempty"`
+	Email     string  `json:"email,omitempty"`
+	Mobile    string  `json:"mobile,omitempty"`
+	Password  string  `json:"password,omitempty"`
+	Token     string  `json:"token,omitempty"`
+	ProxyID   string  `json:"proxy_id,omitempty"`
+	Active    *bool   `json:"active,omitempty"`
+	Muted     bool    `json:"muted,omitempty"`
+	MuteUntil float64 `json:"mute_until,omitempty"`
+	LastUsed  float64 `json:"last_used,omitempty"`
 }
 
 type APIKey struct {

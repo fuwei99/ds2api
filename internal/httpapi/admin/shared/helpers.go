@@ -51,6 +51,12 @@ func FieldString(m map[string]any, key string) string {
 func FieldStringOptional(m map[string]any, key string) (string, bool) {
 	return fieldStringOptional(m, key)
 }
+func FieldBoolOptional(m map[string]any, key string) (bool, bool) {
+	return fieldBoolOptional(m, key)
+}
+func FieldFloat(m map[string]any, key string) float64 {
+	return fieldFloat(m, key)
+}
 func StatusOr(v int, d int) int { return statusOr(v, d) }
 func AccountMatchesIdentifier(acc config.Account, identifier string) bool {
 	return accountMatchesIdentifier(acc, identifier)
@@ -161,7 +167,7 @@ func toStringSlice(v any) ([]string, bool) {
 func toAccount(m map[string]any) config.Account {
 	email := fieldString(m, "email")
 	mobile := config.NormalizeMobileForStorage(fieldString(m, "mobile"))
-	return config.Account{
+	acc := config.Account{
 		Name:     fieldString(m, "name"),
 		Remark:   fieldString(m, "remark"),
 		Email:    email,
@@ -169,6 +175,15 @@ func toAccount(m map[string]any) config.Account {
 		Password: fieldString(m, "password"),
 		ProxyID:  fieldString(m, "proxy_id"),
 	}
+	if active, ok := fieldBoolOptional(m, "active"); ok {
+		acc.Active = &active
+	}
+	if muted, ok := fieldBoolOptional(m, "muted"); ok {
+		acc.Muted = muted
+	}
+	acc.MuteUntil = fieldFloat(m, "mute_until")
+	acc.LastUsed = fieldFloat(m, "last_used")
+	return acc
 }
 
 func toAPIKeys(v any) ([]config.APIKey, bool) {
@@ -295,6 +310,50 @@ func fieldStringOptional(m map[string]any, key string) (string, bool) {
 		return "", false
 	}
 	return strings.TrimSpace(fmt.Sprintf("%v", v)), true
+}
+
+func fieldBoolOptional(m map[string]any, key string) (bool, bool) {
+	v, ok := m[key]
+	if !ok || v == nil {
+		return false, false
+	}
+	switch x := v.(type) {
+	case bool:
+		return x, true
+	case string:
+		switch strings.ToLower(strings.TrimSpace(x)) {
+		case "true", "1", "yes", "y", "on":
+			return true, true
+		case "false", "0", "no", "n", "off":
+			return false, true
+		}
+	}
+	return intFrom(v) != 0, true
+}
+
+func fieldFloat(m map[string]any, key string) float64 {
+	v, ok := m[key]
+	if !ok || v == nil {
+		return 0
+	}
+	switch x := v.(type) {
+	case float64:
+		return x
+	case float32:
+		return float64(x)
+	case int:
+		return float64(x)
+	case int64:
+		return float64(x)
+	case json.Number:
+		f, _ := x.Float64()
+		return f
+	case string:
+		f, _ := strconv.ParseFloat(strings.TrimSpace(x), 64)
+		return f
+	default:
+		return 0
+	}
 }
 
 func statusOr(v int, d int) int {

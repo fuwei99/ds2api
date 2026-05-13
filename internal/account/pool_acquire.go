@@ -2,6 +2,7 @@ package account
 
 import (
 	"context"
+	"time"
 
 	"ds2api/internal/config"
 )
@@ -51,7 +52,7 @@ func (p *Pool) acquireLocked(target string, exclude map[string]bool) (config.Acc
 		if exclude[target] || !p.canAcquireIDLocked(target) {
 			return config.Account{}, false
 		}
-		acc, ok := p.store.FindAccount(target)
+		acc, ok := p.store.FindAvailableAccount(target, time.Now())
 		if !ok {
 			return config.Account{}, false
 		}
@@ -69,7 +70,7 @@ func (p *Pool) tryAcquire(exclude map[string]bool) (config.Account, bool) {
 		if exclude[id] || !p.canAcquireIDLocked(id) {
 			continue
 		}
-		acc, ok := p.store.FindAccount(id)
+		acc, ok := p.store.FindAvailableAccount(id, time.Now())
 		if !ok {
 			continue
 		}

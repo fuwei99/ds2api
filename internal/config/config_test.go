@@ -144,6 +144,40 @@ func TestLoadStoreIgnoresLegacyConfigJSONEnv(t *testing.T) {
 	}
 }
 
+func TestConfigEnvWritesConfigFileAndUsesFileBackedStore(t *testing.T) {
+	path := t.TempDir() + "/config.json"
+	raw := `{
+		"keys":["from-config-env"],
+		"accounts":[{"email":"env@example.com","password":"p","token":"kept-at-runtime"}]
+	}`
+
+	t.Setenv("CONFIG", raw)
+	t.Setenv("DS2API_CONFIG_JSON", `{"keys":["ignored-json-env"]}`)
+	t.Setenv("DS2API_CONFIG_PATH", path)
+
+	store := LoadStore()
+	if store.IsEnvBacked() {
+		t.Fatal("expected CONFIG env bootstrap to become file-backed")
+	}
+	if got := store.Keys(); len(got) != 1 || got[0] != "from-config-env" {
+		t.Fatalf("unexpected keys: %#v", got)
+	}
+	accounts := store.Accounts()
+	if len(accounts) != 1 || accounts[0].Identifier() != "env@example.com" {
+		t.Fatalf("unexpected accounts: %#v", accounts)
+	}
+	if accounts[0].Token != "kept-at-runtime" {
+		t.Fatalf("expected token loaded from written config for runtime use, got %q", accounts[0].Token)
+	}
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("expected CONFIG env to create config file: %v", err)
+	}
+	if string(content) != raw {
+		t.Fatalf("expected exact CONFIG content to be written, got: %s", content)
+	}
+}
+
 func TestExplicitMissingConfigPathBootstrapsEmptyFileBackedStore(t *testing.T) {
 	path := t.TempDir() + "/config.json"
 

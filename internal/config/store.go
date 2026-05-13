@@ -51,8 +51,16 @@ func loadStore() (*Store, error) {
 }
 
 func loadConfig() (Config, bool, error) {
-	rawCfg := strings.TrimSpace(os.Getenv("DS2API_CONFIG_JSON"))
 	path := ConfigPath()
+	if rawFileCfg := os.Getenv("CONFIG"); strings.TrimSpace(rawFileCfg) != "" {
+		if err := writeConfigBytes(path, []byte(rawFileCfg)); err != nil {
+			return Config{}, false, err
+		}
+		cfg, err := loadConfigFromFile(path)
+		return cfg, false, err
+	}
+
+	rawCfg := strings.TrimSpace(os.Getenv("DS2API_CONFIG_JSON"))
 	if rawCfg != "" {
 		cfg, err := parseConfigString(rawCfg)
 		if err != nil {

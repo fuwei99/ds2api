@@ -223,6 +223,7 @@ If you do not want to use the `zeabur.yaml` one-click template, deploy directly 
 | `DS2API_ADMIN_KEY` | Strong random string | Required admin login key. |
 | `DS2API_CONFIG_PATH` | `/data/config.json` | Recommended persistent config path. |
 | `LOG_LEVEL` | `INFO` | Optional log level. |
+| `CONFIG` | Raw `config.json` content | Optional Docker bootstrap. When set, DS2API writes this value directly to `DS2API_CONFIG_PATH` and starts in file-backed mode. |
 | `DS2API_CONFIG_JSON` | Raw JSON or Base64 JSON | Optional config bootstrap from env. |
 | `DS2API_ENV_WRITEBACK` | `1` | Optional; enable only when using `DS2API_CONFIG_JSON` and you want the initial config written to `/data/config.json`. |
 

@@ -213,6 +213,7 @@ cp config.example.json config.json
 
 Recommended per deployment mode:
 - Local run: read `config.json` directly
+- Docker: set `CONFIG` to the raw `config.json` content to create the config file on startup
 - Docker / Vercel: generate Base64 from `config.json` and inject as `DS2API_CONFIG_JSON`, or paste raw JSON directly
 
 The WebUI admin panel’s “Full configuration template” is loaded from the same `config.example.json`, so updating that file keeps the frontend template in sync.

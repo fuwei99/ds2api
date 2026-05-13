@@ -6,7 +6,12 @@ import (
 	"strings"
 )
 
+var baseDirForTest string
+
 func BaseDir() string {
+	if baseDirForTest != "" {
+		return baseDirForTest
+	}
 	cwd, err := os.Getwd()
 	if err != nil {
 		return "."

@@ -216,6 +216,26 @@ func TestExplicitMissingConfigPathBootstrapsEmptyFileBackedStore(t *testing.T) {
 	}
 }
 
+func TestContainerDefaultMissingConfigBootstrapsEmptyFileBackedStore(t *testing.T) {
+	t.Setenv("DS2API_CONFIG_JSON", "")
+	t.Setenv("DS2API_CONFIG_PATH", "")
+
+	oldBaseDir := baseDirForTest
+	baseDirForTest = "/app"
+	defer func() { baseDirForTest = oldBaseDir }()
+
+	cfg, fromEnv, err := loadConfig()
+	if err != nil {
+		t.Fatalf("expected missing container default config to bootstrap, got: %v", err)
+	}
+	if fromEnv {
+		t.Fatal("expected file-backed bootstrap")
+	}
+	if len(cfg.Keys) != 0 || len(cfg.Accounts) != 0 {
+		t.Fatalf("expected empty bootstrap config, got keys=%d accounts=%d", len(cfg.Keys), len(cfg.Accounts))
+	}
+}
+
 func TestEnvBackedStoreWritebackBootstrapsMissingConfigFile(t *testing.T) {
 	tmp, err := os.CreateTemp(t.TempDir(), "config-*.json")
 	if err != nil {
